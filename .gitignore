@@ -1,4 +1,17 @@
-
-DMSplitViewExample/.DS_Store
-
-DMSplitViewExample/DMSplitViewExample.xcodeproj/project.xcworkspace/xcuserdata/daniele.xcuserdatad/UserInterfaceState.xcuserstate
+*.mode1v3
+*.pbxuser
+build
+/Citations/build
+/Citations/CitationsTests/build
+/Extras/MTSQLite-iPhone Test/build
+/Extras/memory_tests_copy
+*node_modules
+/Papers2.xcodeproj/mz2.mode1v3
+/Papers2.xcodeproj/mz2.pbxuser
+/Extras/Tender-Crashes/discussions
+project.xcworkspace
+xcuserdata
+.svn
+.DS_Store
+profile
+*GITIGNORE*
