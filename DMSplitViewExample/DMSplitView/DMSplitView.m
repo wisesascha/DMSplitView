@@ -251,7 +251,7 @@
     DMSubviewConstraint *rightSubviewConstraint = ((DMSubviewConstraint*)subviewContraints[1]);
 
     // no constraint set
-    if (!leftSubviewConstraint.hasSizeContraints && !rightSubviewConstraint) 
+    if (!leftSubviewConstraint.hasSizeContraints && !rightSubviewConstraint.hasSizeContraints)
         return proposedMin;
     
     CGFloat minimumCoordinate = proposedMin;
