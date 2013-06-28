@@ -245,15 +245,32 @@
 #pragma mark - Splitview delegate methods
 
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMinCoordinate:(CGFloat)proposedMin ofSubviewAt:(NSInteger)viewIndex
-{
-    DMSubviewConstraint *subviewConstraint = ((DMSubviewConstraint*)subviewContraints[viewIndex]);
-    if (!subviewConstraint.hasSizeContraints) // no constraint set for this
+{    
+    // check left or top subview 0
+    DMSubviewConstraint *leftSubviewConstraint = ((DMSubviewConstraint*)subviewContraints[0]);
+    DMSubviewConstraint *rightSubviewConstraint = ((DMSubviewConstraint*)subviewContraints[1]);
+
+    // no constraint set
+    if (!leftSubviewConstraint.hasSizeContraints && !rightSubviewConstraint) 
         return proposedMin;
     
-    NSView *targetSubview = ((NSView*)splitView.subviews[viewIndex]);
-    CGFloat subviewOrigin = (splitView.isVertical ? targetSubview.frame.origin.x : targetSubview.frame.origin.y);
-    CGFloat finalCoordinate = subviewOrigin + subviewConstraint.minSize;
-    return finalCoordinate;
+    CGFloat minimumCoordinate = proposedMin;
+    
+    // check left, we can not make it too small
+    if (leftSubviewConstraint.hasSizeContraints)
+    {
+        NSView *targetSubview = ((NSView *)splitView.subviews[0]);
+        CGFloat subviewOrigin = (splitView.isVertical ? NSMinX(targetSubview.frame) : NSMinY(targetSubview.frame));
+        minimumCoordinate = subviewOrigin + leftSubviewConstraint.minSize;
+    }
+   
+    // check right, we cannot make it too big
+    if (rightSubviewConstraint.hasSizeContraints)
+    {
+        return MAX(minimumCoordinate, NSWidth(splitView.frame) - rightSubviewConstraint.maxSize);
+    }
+    
+    return minimumCoordinate;
 }
 
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMaxCoordinate:(CGFloat)proposedMax ofSubviewAt:(NSInteger)viewIndex
