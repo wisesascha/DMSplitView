@@ -360,6 +360,17 @@
     return ((indexOfSubviewToCollapse == NSNotFound) || (indexOfSubview == indexOfSubviewToCollapse));
 }
 
+- (NSRect)splitView:(NSSplitView *)splitView additionalEffectiveRectOfDividerAtIndex:(NSInteger)dividerIndex
+{
+    if (splitView != self)
+        return NSZeroRect;
+    
+    if ([self.eventsDelegate respondsToSelector:@selector(splitView:additionalEffectiveRectOfDividerAtIndex:)])
+        return [self.eventsDelegate splitView:self additionalEffectiveRectOfDividerAtIndex:dividerIndex];
+    
+ 	return NSZeroRect;
+}
+
 #pragma mark - Utilities Methods
 
 - (DMSubviewConstraint *) constraintForSubview:(NSView *) subview {

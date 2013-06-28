@@ -24,21 +24,28 @@ enum {
  @param	splitView	target DMSplitView instance
  @param	animating	YES if animating is started, NO if animation is ended
  */
-- (void) splitView:(DMSplitView *)splitView splitViewIsAnimating:(BOOL)animating;
+- (void)splitView:(DMSplitView *)splitView splitViewIsAnimating:(BOOL)animating;
 
 /** Sent when a divider is moved via user drag. You don't receive this message when animating divider position or set it programmatically
  @param splitView       target DMSplitView instance
  @param dividerIndex    index of the divider
  @param newPosition     the new divider position
  */
-- (void) splitView:(DMSplitView *)splitView divider:(NSInteger) dividerIndex movedAt:(CGFloat) newPosition;
+- (void)splitView:(DMSplitView *)splitView divider:(NSInteger) dividerIndex movedAt:(CGFloat) newPosition;
 
 /** A subview previously expanded is now collapsed or viceversa
  @param splitView       target MKSplitView instance
  @param subviewIndex    index of target subview
  @param newState        DMSplitViewStateCollapsed (collapsed) or DMSplitViewStateExpanded (expanded)
  */
-- (void) splitView:(DMSplitView *)splitView subview:(NSUInteger) subviewIndex stateChanged:(DMSplitViewState) newState;
+- (void)splitView:(DMSplitView *)splitView subview:(NSUInteger) subviewIndex stateChanged:(DMSplitViewState) newState;
+
+/** Additional rectangle which should trigger dragging
+ @param splitView       target MKSplitView instance
+ @param subviewIndex    index of target subview
+ @return                rectangle from which dragging should also occur
+ */
+- (NSRect)splitView:(DMSplitView *)splitView additionalEffectiveRectOfDividerAtIndex:(NSUInteger) dividerIndex;
 @end
 
 /** DMSplitView behavior */
