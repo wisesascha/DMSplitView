@@ -246,28 +246,41 @@
 
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMinCoordinate:(CGFloat)proposedMin ofSubviewAt:(NSInteger)viewIndex
 {    
-    // check left or top subview 0
-    DMSubviewConstraint *leftSubviewConstraint = ((DMSubviewConstraint*)subviewContraints[0]);
-    DMSubviewConstraint *rightSubviewConstraint = ((DMSubviewConstraint*)subviewContraints[1]);
+    DMSubviewConstraint *subview1Constraint = ((DMSubviewConstraint*)subviewContraints[0]);
+    DMSubviewConstraint *subview2Constraint = ((DMSubviewConstraint*)subviewContraints[1]);
 
     // no constraint set
-    if (!leftSubviewConstraint.hasSizeContraints && !rightSubviewConstraint.hasSizeContraints)
+    if (!subview1Constraint.hasSizeContraints &&
+        !subview2Constraint.hasSizeContraints)
         return proposedMin;
     
     CGFloat minimumCoordinate = proposedMin;
     
     // check left, we can not make it too small
-    if (leftSubviewConstraint.hasSizeContraints)
+    if (subview1Constraint.minSize > 0)
     {
         NSView *targetSubview = ((NSView *)splitView.subviews[0]);
-        CGFloat subviewOrigin = (splitView.isVertical ? NSMinX(targetSubview.frame) : NSMinY(targetSubview.frame));
-        minimumCoordinate = subviewOrigin + leftSubviewConstraint.minSize;
+        if (splitView.isVertical)
+        {
+            minimumCoordinate = NSMinX(targetSubview.frame) + subview1Constraint.minSize;
+        }
+        else
+        {
+            minimumCoordinate = NSMinY(targetSubview.frame) + subview1Constraint.minSize;
+        }
     }
    
-    // check right, we cannot make it too big
-    if (rightSubviewConstraint.hasSizeContraints)
+    // check right/bottom, we cannot make it too big
+    if (subview2Constraint.maxSize > 0)
     {
-        return MAX(minimumCoordinate, NSWidth(splitView.frame) - rightSubviewConstraint.maxSize);
+        if (splitView.isVertical)
+        {
+            return MAX(minimumCoordinate, NSWidth(splitView.frame) - subview2Constraint.maxSize);
+        }
+        else
+        {
+            return MAX(minimumCoordinate, NSHeight(splitView.frame) - subview2Constraint.maxSize);
+        }
     }
     
     return minimumCoordinate;
@@ -275,39 +288,44 @@
 
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMaxCoordinate:(CGFloat)proposedMax ofSubviewAt:(NSInteger)viewIndex
 {
-    DMSubviewConstraint *subviewConstraint = ((DMSubviewConstraint*)subviewContraints[viewIndex]);
-    if (!subviewConstraint.hasSizeContraints) // no constraint set for this
+    DMSubviewConstraint *subview1Constraint = ((DMSubviewConstraint*)subviewContraints[0]);
+    DMSubviewConstraint *subview2Constraint = ((DMSubviewConstraint*)subviewContraints[1]);
+    
+    // no constraint set
+    if (!subview1Constraint.hasSizeContraints &&
+        !subview2Constraint.hasSizeContraints)
         return proposedMax;
     
-    NSView *targetSubview = ((NSView*)splitView.subviews[viewIndex]);
-    CGFloat subviewOrigin = (splitView.isVertical ? targetSubview.frame.origin.x : targetSubview.frame.origin.y);
-    CGFloat maximumCoordinate = subviewOrigin + subviewConstraint.maxSize;
-    return MIN(proposedMax, maximumCoordinate);
+    CGFloat maximumCoordinate = proposedMax;
     
-//    
-//    DMSubviewConstraint *constraintShrinkingSubview = ((DMSubviewConstraint*)subviewContraints[offset+1]);
-//    
-//    NSView *growingSubview = self.subviews[offset];
-//	NSView *shrinkingSubview = self.subviews[offset + 1];
-//    
-//	NSRect growingSubviewFrame = growingSubview.frame;
-//	NSRect shrinkingSubviewFrame = shrinkingSubview.frame;
-//    
-//	CGFloat shrinkingSize;
-//	CGFloat currentCoordinate;
-//	if (self.isVertical)
-//    {
-//		currentCoordinate = growingSubviewFrame.origin.x + growingSubviewFrame.size.width;
-//		shrinkingSize = shrinkingSubviewFrame.size.width;
-//	}
-//    else
-//    {
-//		currentCoordinate = growingSubviewFrame.origin.y + growingSubviewFrame.size.height;
-//		shrinkingSize = shrinkingSubviewFrame.size.height;
-//	}
-//	
-//	CGFloat minimumSize = constraintShrinkingSubview.minSize;
-//	return currentCoordinate + (shrinkingSize - minimumSize);
+    // check left, we can not make it too small
+    if (subview1Constraint.maxSize > 0)
+    {
+        NSView *targetSubview = ((NSView *)splitView.subviews[0]);
+        if (splitView.isVertical)
+        {
+            maximumCoordinate = NSMinX(targetSubview.frame) + subview1Constraint.maxSize;
+        }
+        else
+        {
+            maximumCoordinate = NSMinY(targetSubview.frame) + subview1Constraint.maxSize;
+        }
+    }
+    
+    // check right/bottom, we cannot make it too big
+    if (subview2Constraint.minSize > 0)
+    {
+        if (splitView.isVertical)
+        {
+            return MIN(maximumCoordinate, NSWidth(splitView.frame) - subview2Constraint.minSize);
+        }
+        else
+        {
+            return MIN(maximumCoordinate, NSHeight(splitView.frame) - subview2Constraint.minSize);
+        }
+    }
+    
+    return maximumCoordinate;
 }
 
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
