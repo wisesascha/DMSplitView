@@ -104,6 +104,9 @@ enum {
 /** should draw divider handle */
 @property (nonatomic,assign)    BOOL                        shouldDrawDividerHandle;
 
+/** is the splitview currently animating */
+@property (nonatomic,readonly)  BOOL                        isAnimating;
+
 #pragma mark - Initialization
 
 /** @name Initialization */

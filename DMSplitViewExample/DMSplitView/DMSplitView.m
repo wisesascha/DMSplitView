@@ -161,6 +161,10 @@
         return ([super isSubviewCollapsed:subview] || ([subview frame].size.height == 0));
 }
 
+- (BOOL)isAnimating
+{
+    return isAnimating;
+}
 
 #pragma mark - Appearance Drawing Routines
 
