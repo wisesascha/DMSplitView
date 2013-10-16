@@ -153,12 +153,18 @@
     [self setNeedsDisplay:YES];
 }
 
-- (BOOL)isSubviewCollapsed:(NSView *)subview {
-    // Overloaded version of [NSSplitView isSubviewCollapsed:] which take into account the subview dimension: it is a far more tolerant version of the method.
+- (BOOL)isSubviewCollapsed:(NSView *)subview
+{
+    // Overloaded version of [NSSplitView isSubviewCollapsed:] which take
+    // into account the subview dimension: it is a far more tolerant version of the method.
     if (self.isVertical)
-        return ([super isSubviewCollapsed:subview] || ([subview frame].size.width == 0));
+    {
+        return ([super isSubviewCollapsed:subview] || ([subview frame].size.width < 0.1));
+    }
     else
-        return ([super isSubviewCollapsed:subview] || ([subview frame].size.height == 0));
+    {
+        return ([super isSubviewCollapsed:subview] || ([subview frame].size.height < 0.1));
+    }
 }
 
 - (BOOL)isAnimating
@@ -332,32 +338,43 @@
     return maximumCoordinate;
 }
 
-- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
-    if (isAnimating) { // if we are inside an animated session we want to redraw correctly NSSplitView elements (as like the moving divider)
+- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
+{
+    if (isAnimating)
+    {
+        // if we are inside an animated session we want to redraw correctly
+        // NSSplitView elements (as like the moving divider)
         [self setNeedsDisplay:YES];
-        return; // relayout constraint does not happend while animating... we don't want to interfere with animation.
+        
+        // relayout constraint does not happend while animating...
+        // we don't want to interfere with animation.
+        return; 
     }
     
-    switch (self.subviewsResizeMode) {
-        case DMSplitViewResizeModeUniform: // UNIFORM RESIZE
+    switch (self.subviewsResizeMode)
+    {
+        case DMSplitViewResizeModeUniform:
             [self applyUniformResizeFromOldSize:oldSize];
             break;
-        case DMSplitViewResizeModePriorityBased: // PRIORITY BASED RESIZE
+            
+        case DMSplitViewResizeModePriorityBased:
             [self applyPriorityResizeFromOldSize:oldSize];
             break;
-        case DMSplitViewResizeModeProportional: // PROPORTIONAL RESIZE
+            
+        case DMSplitViewResizeModeProportional:
         default:
             [self applyProportionalResizeFromOldSize:oldSize];
             break;
     }
 }
 
-- (BOOL)splitView:(NSSplitView *)splitView canCollapseSubview:(NSView *)subview {
-    BOOL canCollapse = [self constraintForSubview:subview].canCollapse;
-    return canCollapse;
+- (BOOL)splitView:(NSSplitView *)splitView canCollapseSubview:(NSView *)subview
+{
+    return [self constraintForSubview:subview].canCollapse;
 }
 
-- (BOOL)splitView:(NSSplitView *)splitView shouldCollapseSubview:(NSView *)subview forDoubleClickOnDividerAtIndex:(NSInteger)dividerIndex {
+- (BOOL)splitView:(NSSplitView *)splitView shouldCollapseSubview:(NSView *)subview forDoubleClickOnDividerAtIndex:(NSInteger)dividerIndex
+{
     NSUInteger indexOfSubviewToCollapse = [self subviewIndexToCollapseForDoubleClickOnDividerAtIndex:dividerIndex];
     NSUInteger indexOfSubview = [self.subviews indexOfObject:subview];
     
@@ -377,7 +394,8 @@
 
 #pragma mark - Utilities Methods
 
-- (DMSubviewConstraint *) constraintForSubview:(NSView *) subview {
+- (DMSubviewConstraint *)constraintForSubview:(NSView *)subview
+{
     NSUInteger viewIndex = [self.subviews indexOfObject:subview];
 	if (viewIndex == NSNotFound) return nil;
 	return subviewContraints[viewIndex];
@@ -502,65 +520,102 @@
     free(subviewsSizes); free(subviewsProportions); free(resizableSubviews);
 }
 
-- (void) applyPriorityResizeFromOldSize:(CGSize) splitViewOldSize {
-    __block CGFloat deltaValue = (self.isVertical ?  (self.bounds.size.width-splitViewOldSize.width) :
-                                                     (self.bounds.size.height-splitViewOldSize.height));
+- (void)applyPriorityResizeFromOldSize:(CGSize)splitViewOldSize
+{
+    __block CGFloat deltaValue = (self.isVertical ?  (NSWidth(self.bounds) - splitViewOldSize.width) :
+                                                     (NSHeight(self.bounds) - splitViewOldSize.height));
 
-    for (NSNumber *priorityIndex in [[priorityIndexes allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+    //NSLog(@"--APPLY PRIORITY");
+    NSArray *indices = [[priorityIndexes allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    for (NSNumber *priorityIndex in indices)
+    {
         NSNumber *subviewIndex = [priorityIndexes objectForKey:priorityIndex];
         if (subviewIndex.integerValue >= self.subviews.count)
 			continue;
     
-        NSView *subview = (NSView*)self.subviews[subviewIndex.integerValue];
-        if (![self isSubviewCollapsed:subview]) {
+        NSView *subview = (NSView *)self.subviews[subviewIndex.integerValue];
+        if (![self isSubviewCollapsed:subview])
+        {
+            //NSLog(@"FRAME AT INDEX %@: %@",subviewIndex, NSStringFromRect(subview.frame));
+
             NSSize frameSize = subview.frame.size;
             DMSubviewConstraint *constraint = [self constraintForSubview:subview];
             CGFloat minValue = constraint.minSize;
         
-            if (self.isVertical) {
+            if (self.isVertical)
+            {
                 frameSize.height = self.bounds.size.height;
-                if (deltaValue > 0.0f || frameSize.width + deltaValue >= minValue) {
+                if (deltaValue > 0.0f || frameSize.width + deltaValue >= minValue)
+                {
                     frameSize.width += deltaValue;
                     deltaValue = 0.0f;
-                } else if (deltaValue < 0.0f) {
-                    deltaValue += frameSize.width-minValue;
+                }
+                else if (deltaValue < 0.0f)
+                {
+                    deltaValue += frameSize.width - minValue;
                     frameSize.width = minValue;
                 }
-            } else {
+            }
+            else
+            {
                 frameSize.width = self.bounds.size.width;
-                if (deltaValue > 0.0f || frameSize.height + deltaValue >= minValue) {
+                if (deltaValue > 0.0f || frameSize.height + deltaValue >= minValue)
+                {
                     frameSize.height += deltaValue;
                     deltaValue = 0.0f;
-                } else if (deltaValue < 0.0f) {
+                }
+                else if (deltaValue < 0.0f)
+                {
                     deltaValue += frameSize.height - minValue;
                     frameSize.height = minValue;
                 }
             }
             [subview setFrameSize:frameSize];
+            //NSLog(@"NEW FRAME AT INDEX %@: %@",subviewIndex, NSStringFromRect(subview.frame));
         }
     }
+    //NSLog(@"--END APPLY");
     [self layoutSubviews];
 }
 
-- (void) layoutSubviews {
+- (void)layoutSubviews
+{
 	CGFloat offset = 0;
     NSUInteger k = 0;
-	for (NSView *subview in self.subviews) {
+    //NSLog(@"--START LAYOUT");
+	for (NSView *subview in self.subviews)
+    {
 		NSRect viewFrame = subview.frame;
+        //NSLog(@"LAYOUT FRAME: %@", NSStringFromRect(viewFrame));
+        
 		NSPoint viewOrigin = viewFrame.origin;
 		
-        if (self.isVertical)    viewOrigin.x = offset;
-        else                    viewOrigin.y = offset;
+        if (self.isVertical)
+        {
+            viewOrigin.x = offset;
+        }
+        else
+        {
+            viewOrigin.y = offset;
+        }
 		[subview setFrameOrigin:viewOrigin];
-		offset += (self.isVertical ? viewFrame.size.width :viewFrame.size.height) + self.dividerThickness;
+        
+		offset += (self.isVertical ? viewFrame.size.width : viewFrame.size.height) + self.dividerThickness;
         k++;
         
         // When a subview is collapsed NSSplitView set it's hidden property as YES
         // So we need to set it as visible if we set as uncollapsed programmatically, otherwise we will see
         // a blank space instead of our superview
-        if (self.isVertical)    [subview setHidden:!(subview.frame.size.width > 0)];
-        else    [subview setHidden:!(subview.frame.size.height > 0)];
+        if (self.isVertical)
+        {
+            [subview setHidden:!(subview.frame.size.width > 0.1)];
+        }
+        else
+        {
+            [subview setHidden:!(subview.frame.size.height > 0.1)];
+        }
 	}
+    //NSLog(@"--END LAYOUT");
 }
 
 #pragma mark - Additional Methods
