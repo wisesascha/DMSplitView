@@ -794,7 +794,7 @@
         CGFloat  newPosition = [[newPositions objectAtIndex:[indexes indexOfObject:indexObject]] doubleValue];
         
         // save divider state where necessary
-        [self saveCurrentDivididerState];
+        [self saveCurrentDividerState];
         
         if (self.isVertical)
         {
@@ -906,6 +906,7 @@
     }
     else
     {
+        [self saveCurrentDividerState];
         subview.hidden = YES;
         [self adjustSubviews];
     }
@@ -923,7 +924,7 @@
 
 #pragma mark - Other Events of the delegate
 
-- (void)saveCurrentDivididerState
+- (void)saveCurrentDividerState
 {
     for (NSUInteger k=0; k<self.subviews.count-1; k++)
     {
@@ -942,7 +943,7 @@
     
     // used to restore from collapse state; we want to save it before animating, not while animating and finally we won't save collapsed state
     if (!isAnimating)
-        [self saveCurrentDivididerState];
+        [self saveCurrentDividerState];
 
     if (!isAnimating)
     {
