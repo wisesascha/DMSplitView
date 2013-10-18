@@ -50,6 +50,12 @@
 
 @end
 
+@interface NSView (DMViewExtensions)
+// copied from NSView Extensions
+- (NSRect)dm_pixelAlignedRect:(NSRect)rect;
+- (NSRect)dm_pixelAlignedRect:(NSRect)rect options:(NSAlignmentOptions)options;
+@end
+
 #pragma mark - DMSplitView Implementation
 
 @interface DMSplitView()
@@ -577,6 +583,7 @@
 
     //NSLog(@"--APPLY PRIORITY");
     NSArray *indices = [[priorityIndexes allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    
     for (NSNumber *priorityIndex in indices)
     {
         NSNumber *subviewIndex = [priorityIndexes objectForKey:priorityIndex];
@@ -621,9 +628,11 @@
                 }
             }
             [subview setFrameSize:frameSize];
+            
             //NSLog(@"NEW FRAME AT INDEX %@: %@",subviewIndex, NSStringFromRect(subview.frame));
         }
     }
+    
     //NSLog(@"--END APPLY");
     [self layoutSubviews];
 }
@@ -631,40 +640,69 @@
 - (void)layoutSubviews
 {
 	CGFloat offset = 0;
-    NSUInteger k = 0;
     //NSLog(@"--START LAYOUT");
 	for (NSView *subview in self.subviews)
     {
 		NSRect viewFrame = subview.frame;
         //NSLog(@"LAYOUT FRAME: %@", NSStringFromRect(viewFrame));
-        
-		NSPoint viewOrigin = viewFrame.origin;
-		
+        		
         if (self.isVertical)
         {
-            viewOrigin.x = offset;
+            viewFrame.origin.x = offset;
         }
         else
         {
-            viewOrigin.y = offset;
+            viewFrame.origin.y = offset;
         }
-		[subview setFrameOrigin:viewOrigin];
+        // FIXME: properly pixelAlign
+		[subview setFrame:NSIntegralRect(viewFrame)];//[self dm_pixelAlignedRect:viewFrame]];
         
-		offset += (self.isVertical ? viewFrame.size.width : viewFrame.size.height)+ self.dividerThickness;
-        k++;
+		offset += (self.isVertical ? viewFrame.size.width : viewFrame.size.height) + self.dividerThickness;
         
-        // When a subview is collapsed NSSplitView set it's hidden property as YES
-        // So we need to set it as visible if we set as uncollapsed programmatically, otherwise we will see
-        // a blank space instead of our superview
-        if (self.isVertical)
+        // move the views within the boundary of the splitview if they're hidden or we'll get warnings
+        if (subview.isHidden)
         {
-            [subview setHidden:!(subview.frame.size.width > 0.1)];
-        }
-        else
-        {
-            [subview setHidden:!(subview.frame.size.height > 0.1)];
+            NSRect frame = subview.frame;
+            if (self.isVertical)
+            {
+                CGFloat extension = NSMaxX(frame) - NSWidth(self.bounds);
+                if (extension > 0)
+                {
+                    frame.origin.x -= extension;
+                    subview.frame = frame;
+                }
+            }
+            else
+            {
+                CGFloat extension = NSMaxY(frame) - NSHeight(self.bounds);
+                if (extension > 0)
+                {
+                    frame.origin.y -= extension;
+                    subview.frame = frame;
+                }
+            }
         }
 	}
+
+//    // correct for any problems, we adjust the one with lowest priority
+//    NSView *subview = [self.subviews lastObject];
+//    if (![self isSubviewCollapsed:subview])
+//    {
+//        NSRect frame = subview.frame;
+//        
+//        if (self.isVertical)
+//        {
+//            frame.size.width += NSWidth(self.bounds) - offset;
+//        }
+//        else
+//        {
+//            frame.size.height += NSHeight(self.bounds) - offset;
+//        }
+//        
+//        [subview setFrame:frame];
+//    }
+
+    
     //NSLog(@"--END LAYOUT");
 }
 
@@ -865,21 +903,11 @@
         subview.hidden = NO;
         newValue = lastValuesBeforeCollapse[dividerIndex];
         [self setPosition:newValue ofDividerAtIndex:dividerIndex animated:animated completitionBlock:nil];
-        
-//        if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)])
-//            [self.eventsDelegate splitView:self
-//                                   subview:dividerIndex
-//                              stateChanged:DMSplitViewStateExpanded];
     }
     else
     {
         subview.hidden = YES;
         [self adjustSubviews];
-        
-//        if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)])
-//            [self.eventsDelegate splitView:self
-//                                   subview:dividerIndex
-//                              stateChanged:DMSplitViewStateCollapsed];
     }
 
     [self updateSubviewsState];
@@ -1004,6 +1032,39 @@
      }];
     
     return YES;
+}
+
+@end
+
+
+@implementation NSView (DMViewExtensions)
+
+- (NSRect)dm_pixelAlignedRect:(NSRect)rect
+{
+    return [self dm_pixelAlignedRect:rect options:NSAlignAllEdgesNearest];
+}
+
+- (NSRect)dm_pixelAlignedRect:(NSRect)rect options:(NSAlignmentOptions)options
+{
+    NSRect windowBackingRect = [self backingAlignedRect:rect options:options];
+    
+    // correct for some odd behaviour: http://cocoamine.net/blog/2013/03/02/integral-rectangles/
+    // if the width or height of aRect is 0 or negative, NSIntegralRect returns a rectangle with
+    // origin at (0.0, 0.0) and with zero width and heigh
+    // asumes rect is in view coordinates
+    if (NSHeight(rect) <= 0.0f || NSWidth(rect) <= 0.0f)
+    {
+        NSRect tempRect = rect;
+        tempRect.size.height = (NSHeight(rect) <= 0.0f ? 0.1 : NSHeight(rect));
+        tempRect.size.width = (NSWidth(rect) <= 0.0f ? 0.1 : NSWidth(rect));
+        windowBackingRect = [self backingAlignedRect:tempRect options:options];
+    }
+    
+    // if we're not in a window we don't need to convert, we simply return the rect as is
+    if (!self.window)
+        return windowBackingRect;
+    
+    return [self convertRect:windowBackingRect fromView:nil];
 }
 
 @end
