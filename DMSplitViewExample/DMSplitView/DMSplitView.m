@@ -432,6 +432,14 @@
  	return NSZeroRect;
 }
 
+- (BOOL)splitView:(NSSplitView *)splitView shouldHideDividerAtIndex:(NSInteger)dividerIndex
+{
+    if ([self.eventsDelegate respondsToSelector:@selector(splitView:shouldHideCollapsedDividerAtIndex:)])
+        return [self.eventsDelegate splitView:self shouldHideCollapsedDividerAtIndex:dividerIndex];
+    
+ 	return YES;
+}
+
 #pragma mark - Utilities Methods
 
 - (DMSubviewConstraint *)constraintForSubview:(NSView *)subview
