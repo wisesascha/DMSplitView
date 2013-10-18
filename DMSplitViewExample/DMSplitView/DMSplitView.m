@@ -54,11 +54,11 @@
 
 @interface DMSplitView()
 {
-	NSMutableDictionary*    priorityIndexes;
-    NSMutableArray*         subviewContraints;
-    NSMutableDictionary*    viewsToCollapseByDivider;
-    CGFloat*                lastValuesBeforeCollapse;
-    CGFloat*                subviewsStates;
+	NSMutableDictionary *   priorityIndexes;
+    NSMutableArray *        subviewContraints;
+    NSMutableDictionary *   viewsToCollapseByDivider;
+    CGFloat *               lastValuesBeforeCollapse;
+    NSUInteger *            subviewsStates;
 
     // override divider thickneess
     CGFloat                 oDividerThickness;
@@ -113,7 +113,7 @@
     viewsToCollapseByDivider = [[NSMutableDictionary alloc] init];
     subviewContraints = [[NSMutableArray alloc] init];
     lastValuesBeforeCollapse = calloc(sizeof(CGFloat)*self.subviews.count, 1);
-    subviewsStates = calloc(sizeof(CGFloat)*self.subviews.count, 1);
+    subviewsStates = calloc(sizeof(NSUInteger)*self.subviews.count, 1);
 
     for (NSUInteger k = 0; k < self.subviews.count; k++)
         [subviewContraints addObject:[[DMSubviewConstraint alloc] init]];
@@ -857,13 +857,25 @@
         subview.hidden = NO;
         newValue = lastValuesBeforeCollapse[dividerIndex];
         [self setPosition:newValue ofDividerAtIndex:dividerIndex animated:animated completitionBlock:nil];
+        
+//        if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)])
+//            [self.eventsDelegate splitView:self
+//                                   subview:dividerIndex
+//                              stateChanged:DMSplitViewStateExpanded];
     }
     else
     {
         subview.hidden = YES;
         [self adjustSubviews];
+        
+//        if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)])
+//            [self.eventsDelegate splitView:self
+//                                   subview:dividerIndex
+//                              stateChanged:DMSplitViewStateCollapsed];
     }
-    
+
+    [self updateSubviewsState];
+
     return isCollapsed;
 }
 
@@ -902,21 +914,6 @@
             [self.eventsDelegate splitView:self
                                    divider:dividerIndex
                                    movedAt:newPosition];
-        
-        BOOL isCollapsing = (subviewsStates[dividerIndex] > 0)&& (newPosition == 0);
-        BOOL isExpanding = (subviewsStates[dividerIndex] == 0)&& (newPosition > 0);
-        
-        if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)])
-        {
-            if (isCollapsing)
-                [self.eventsDelegate splitView:self
-                                       subview:dividerIndex
-                                  stateChanged:DMSplitViewStateCollapsed];
-            if (isExpanding)
-                [self.eventsDelegate splitView:self
-                                       subview:dividerIndex
-                                  stateChanged:DMSplitViewStateExpanded];
-        }
     }
     
     [self updateSubviewsState];
@@ -924,10 +921,31 @@
 
 - (void)updateSubviewsState
 {
-    [self.subviews enumerateObjectsUsingBlock:^(NSView* subview, NSUInteger subviewIndex, BOOL *stop)
+    [self.subviews enumerateObjectsUsingBlock:^(NSView *subview, NSUInteger subviewIndex, BOOL *stop)
     {
-        CGFloat size = ([self isSubviewCollapsed:subview] ? 0.0 : (self.isVertical ? NSWidth(subview.frame): NSHeight(subview.frame)));
-        subviewsStates[subviewIndex] = size;
+        DMSplitViewState newState = (subview.isHidden ? DMSplitViewStateCollapsed : DMSplitViewStateExpanded);
+        
+        if (subviewsStates[subviewIndex] != newState)
+        {
+            if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)])
+            {
+                if (newState == DMSplitViewStateCollapsed)
+                {
+                    [self.eventsDelegate splitView:self
+                                           subview:subviewIndex
+                                      stateChanged:DMSplitViewStateCollapsed];
+                }
+                else
+                {
+                    [self.eventsDelegate splitView:self
+                                           subview:subviewIndex
+                                      stateChanged:DMSplitViewStateExpanded];
+                }
+            }
+            
+            
+            subviewsStates[subviewIndex] = newState;
+        }
     }];
 }
 
