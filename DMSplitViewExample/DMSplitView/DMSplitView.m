@@ -78,7 +78,11 @@
 @implementation DMSplitView
 
 @synthesize eventsDelegate;
-@synthesize shouldDrawDivider,shouldDrawDividerHandle,dividerThickness,dividerColor,dividerRectEdge;
+@synthesize shouldDrawDivider,shouldDrawDividerHandle,dividerRectEdge;
+
+#ifndef __MAC_10_10
+@synthesize dividerColor=dividerColor;
+#endif
 
 - (id)init
 {
@@ -145,7 +149,7 @@
 
 - (void)setDividerColor:(NSColor *)newDividerColor
 {
-    if (newDividerColor != dividerColor)
+    if (newDividerColor != self.dividerColor)
     {
         dividerColor = newDividerColor;
         [self setNeedsDisplay:YES];

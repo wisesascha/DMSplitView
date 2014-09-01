@@ -103,6 +103,10 @@ enum {
 - (void)setDividerThickness:(CGFloat)dividerThickness;
 - (void)setDividerColor:(NSColor *)color;
 
+#ifndef __MAC_10_10
+@property (nonatomic,retain)   NSColor                     *dividerColor;
+#endif
+
 /** should draw splitview divider. NO to use default NSSplitView behavior */
 @property (nonatomic,assign)   BOOL                        shouldDrawDivider;
 /** set divider draw rect edge */
