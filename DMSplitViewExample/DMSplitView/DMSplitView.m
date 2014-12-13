@@ -79,10 +79,7 @@
 
 @synthesize eventsDelegate;
 @synthesize shouldDrawDivider,shouldDrawDividerHandle,dividerRectEdge;
-
-#ifndef __MAC_10_10
-@synthesize dividerColor=dividerColor;
-#endif
+@synthesize dividerColor = dividerColor;
 
 - (id)init
 {
