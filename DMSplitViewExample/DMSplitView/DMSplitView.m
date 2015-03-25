@@ -80,10 +80,6 @@
 @synthesize eventsDelegate;
 @synthesize shouldDrawDivider,shouldDrawDividerHandle,dividerRectEdge;
 
-#ifndef __MAC_10_10
-@synthesize dividerColor=dividerColor;
-#endif
-
 - (id)init
 {
     if (self = [self initWithFrame:NSZeroRect])
@@ -147,11 +143,11 @@
     [self setNeedsDisplay:YES];
 }
 
-- (void)setDividerColor:(NSColor *)newDividerColor
+- (void)setCustomDividerColor:(NSColor *)newDividerColor
 {
-    if (newDividerColor != self.dividerColor)
+    if (newDividerColor != self.customDividerColor)
     {
-        dividerColor = newDividerColor;
+        _customDividerColor = newDividerColor;
         [self setNeedsDisplay:YES];
     }
 }
@@ -204,6 +200,14 @@
 
 #pragma mark - Appearance Drawing Routines
 
+- (NSColor *)dividerColor {
+    if (!self.customDividerColor || [self.customDividerColor isEqual:[NSColor clearColor]]) {
+        return super.dividerColor;
+    }
+    
+    return self.customDividerColor;
+}
+
 - (void)drawDividerInRect:(NSRect)aRect
 {
     if (self.shouldDrawDivider)
@@ -217,10 +221,10 @@
         {
             if (self.shouldDrawDividerHandle)
             {
-                NSColor * tempDividerColor = self.dividerColor;
-				self.dividerColor = [NSColor clearColor];
+                NSColor *tempDividerColor = self.customDividerColor;
+				self.customDividerColor = nil;
 				[super drawDividerInRect:aRect];
-				self.dividerColor = tempDividerColor;
+				self.customDividerColor = tempDividerColor;
             }
             
             [self.dividerColor set];

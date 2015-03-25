@@ -101,11 +101,9 @@ enum {
 #pragma mark - NSSplitView appearance
 
 - (void)setDividerThickness:(CGFloat)dividerThickness;
-- (void)setDividerColor:(NSColor *)color;
 
-#ifndef __MAC_10_10
-@property (nonatomic,retain)   NSColor                     *dividerColor;
-#endif
+/** A separate property used for overriding the -dividerColor provided by Cocoa (10.10 SDK changes rules on overriding) */
+@property (nonatomic,retain)   NSColor                     *customDividerColor;
 
 /** should draw splitview divider. NO to use default NSSplitView behavior */
 @property (nonatomic,assign)   BOOL                        shouldDrawDivider;
