@@ -80,9 +80,7 @@
 @synthesize eventsDelegate;
 @synthesize shouldDrawDivider,shouldDrawDividerHandle,dividerRectEdge;
 
-#ifndef __MAC_10_10
 @synthesize dividerColor=dividerColor;
-#endif
 
 - (id)init
 {
@@ -154,6 +152,10 @@
         dividerColor = newDividerColor;
         [self setNeedsDisplay:YES];
     }
+}
+
+- (NSColor *)dividerColor {
+    return self.dividerColor;
 }
 
 - (CGFloat)dividerThickness
