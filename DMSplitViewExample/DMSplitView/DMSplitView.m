@@ -154,7 +154,7 @@
 }
 
 - (NSColor *)dividerColor {
-    return self.dividerColor;
+    return dividerColor;
 }
 
 - (CGFloat)dividerThickness
