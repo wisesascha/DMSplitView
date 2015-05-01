@@ -153,6 +153,10 @@
     }
 }
 
+- (NSColor *)dividerColor {
+    return self.dividerColor;
+}
+
 - (CGFloat)dividerThickness
 {
     if (dividerThicknessOverriden)
